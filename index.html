@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Base64 Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            max-width: 900px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .upload-zone {
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+
+        .upload-zone:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.dragover {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            transform: scale(1.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .upload-text {
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-title {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .preview-section {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .preview-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .file-info {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .output-section {
+            display: none;
+        }
+
+        .output-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .format-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .format-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .format-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .format-btn.active {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            border-color: #22c55e;
+        }
+
+        .output-textarea {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .output-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(74, 222, 128, 0.9);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .output-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .actions {
+                justify-content: center;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .processing {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎨 Base64 Converter</h1>
+            <p class="subtitle">Transform your images into base64 strings with style</p>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Drop your image here or click to browse</div>
+            <div class="upload-hint">Supports JPG, PNG, GIF, WebP • Max 10MB</div>
+            <input type="file" class="file-input" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Lightning Fast</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">100% Secure</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Mobile Friendly</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Pixel Perfect</div>
+            </div>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <div class="preview-card">
+                <div class="preview-header">
+                    <h3 class="preview-title">📸 Image Preview</h3>
+                </div>
+                <div class="file-info" id="fileInfo"></div>
+                <img class="preview-image" id="previewImage" alt="Preview">
+            </div>
+        </div>
+
+        <div class="output-section" id="outputSection">
+            <div class="output-card">
+                <div class="output-header">
+                    <h3 class="preview-title">💻 Base64 Output</h3>
+                    <div class="format-selector">
+                        <button class="format-btn active" data-format="dataurl">Data URL</button>
+                        <button class="format-btn" data-format="base64">Base64 Only</button>
+                        <button class="format-btn" data-format="css">CSS Background</button>
+                        <button class="format-btn" data-format="html">HTML Image</button>
+                    </div>
+                </div>
+                <textarea class="output-textarea" id="outputTextarea" placeholder="Your base64 code will appear here..." readonly></textarea>
+                <div class="actions">
+                    <button class="btn btn-success" id="copyBtn">📋 Copy to Clipboard</button>
+                    <button class="btn" id="downloadBtn">💾 Download as Text</button>
+                    <button class="btn btn-danger" id="clearBtn">🗑️ Clear All</button>
+                </div>
+                <div class="stats" id="stats"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        class ImageToBase64Converter {
+            constructor() {
+                this.currentFile = null;
+                this.currentBase64 = null;
+                this.currentFormat = 'dataurl';
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.uploadZone = document.getElementById('uploadZone');
+                this.fileInput = document.getElementById('fileInput');
+                this.previewSection = document.getElementById('previewSection');
+                this.previewImage = document.getElementById('previewImage');
+                this.fileInfo = document.getElementById('fileInfo');
+                this.outputSection = document.getElementById('outputSection');
+                this.outputTextarea = document.getElementById('outputTextarea');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressFill = document.getElementById('progressFill');
+                this.stats = document.getElementById('stats');
+                this.notification = document.getElementById('notification');
+                this.formatBtns = document.querySelectorAll('.format-btn');
+                this.copyBtn = document.getElementById('copyBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+            }
+
+            bindEvents() {
+                // Upload zone events
+                this.uploadZone.addEventListener('click', () => this.fileInput.click());
+                this.uploadZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.uploadZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.uploadZone.addEventListener('drop', this.handleDrop.bind(this));
+                
+                // File input change
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                
+                // Format buttons
+                this.formatBtns.forEach(btn => {
+                    btn.addEventListener('click', () => this.changeFormat(btn.dataset.format));
+                });
+                
+                // Action buttons
+                this.copyBtn.addEventListener('click', this.copyToClipboard.bind(this));
+                this.downloadBtn.addEventListener('click', this.downloadAsText.bind(this));
+                this.clearBtn.addEventListener('click', this.clearAll.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.uploadZone.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.uploadZone.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.uploadZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                if (e.target.files.length > 0) {
+                    this.processFile(e.target.files[0]);
+                }
+            }
+
+            processFile(file) {
+                // Validate file
+                if (!this.validateFile(file)) return;
+
+                this.currentFile = file;
+                this.showProgress();
+                
+                // Simulate processing time for smooth UX
+                setTimeout(() => {
+                    this.convertToBase64(file);
+                }, 300);
+            }
+
+            validateFile(file) {
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
+
+                if (!validTypes.includes(file.type)) {
+                    this.showNotification('❌ Please select a valid image file (JPG, PNG, GIF, WebP)', 'error');
+                    return false;
+                }
+
+                if (file.size > maxSize) {
+                    this.showNotification('❌ File size must be less than 10MB', 'error');
+                    return false;
+                }
+
+                return true;
+            }
+
+            showProgress() {
+                this.progressBar.style.display = 'block';
+                this.uploadZone.classList.add('processing');
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        this.hideProgress();
+                    }
+                    this.progressFill.style.width = progress + '%';
+                }, 100);
+            }
+
+            hideProgress() {
+                setTimeout(() => {
+                    this.progressBar.style.display = 'none';
+                    this.uploadZone.classList.remove('processing');
+                    this.progressFill.style.width = '0%';
+                }, 500);
+            }
+
+            convertToBase64(file) {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    this.currentBase64 = e.target.result;
+                    this.displayPreview(file);
+                    this.displayOutput();
+                    this.showNotification('✅ Image converted successfully!', 'success');
+                };
+
+                reader.onerror = () => {
+                    this.showNotification('❌ Error reading file', 'error');
+                    this.hideProgress();
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            displayPreview(file) {
+                // Show preview section
+                this.previewSection.style.display = 'block';
+                
+                // Set preview image
+                this.previewImage.src = this.currentBase64;
+                
+                // Display file info
+                const fileSize = this.formatFileSize(file.size);
+                const lastModified = new Date(file.lastModified).toLocaleDateString();
+                
+                this.fileInfo.innerHTML = `
+                    <div class="info-item">📁 ${file.name}</div>
+                    <div class="info-item">📏 ${fileSize}</div>
+                    <div class="info-item">🗓️ ${lastModified}</div>
+                    <div class="info-item">🎨 ${file.type}</div>
+                `;
+
+                // Get image dimensions
+                this.previewImage.onload = () => {
+                    const dimensions = `${this.previewImage.naturalWidth} × ${this.previewImage.naturalHeight}`;
+                    this.fileInfo.innerHTML += `<div class="info-item">📐 ${dimensions}px</div>`;
+                };
+            }
+
+            displayOutput() {
+                this.outputSection.style.display = 'block';
+                this.updateOutput();
+                this.updateStats();
+            }
+
+            updateOutput() {
+                let output = '';
+                
+                switch (this.currentFormat) {
+                    case 'dataurl':
+                        output = this.currentBase64;
+                        break;
+                    case 'base64':
+                        output = this.currentBase64.split(',')[1];
+                        break;
+                    case 'css':
+                        output = `background-image: url('${this.currentBase64}');`;
+                        break;
+                    case 'html':
+                        output = `<img src="${this.currentBase64}" alt="Base64 Image">`;
+                        break;
+                }
+                
+                this.outputTextarea.value = output;
+            }
+
+            changeFormat(format) {
+                this.currentFormat = format;
+                
+                // Update active button
+                this.formatBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-format="${format}"]`).classList.add('active');
+                
+                this.updateOutput();
+            }
+
+            updateStats() {
+                const originalSize = this.formatFileSize(this.currentFile.size);
+                const base64Size = this.formatFileSize(this.currentBase64.length);
+                const compressionRatio = ((this.currentBase64.length / this.currentFile.size) * 100).toFixed(1);
+                
+                this.stats.innerHTML = `
+                    <div class="stat-item">📊 Original: ${originalSize}</div>
+                    <div class="stat-item">📈 Base64: ${base64Size}</div>
+                    <div class="stat-item">📉 Ratio: ${compressionRatio}%</div>
+                    <div class="stat-item">🔢 Characters: ${this.currentBase64.length.toLocaleString()}</div>
+                `;
+            }
+
+            async copyToClipboard() {
+                try {
+                    await navigator.clipboard.writeText(this.outputTextarea.value);
+                    this.showNotification('📋 Copied to clipboard!', 'success');
+                } catch (err) {
+                    // Fallback for older browsers
+                    this.outputTextarea.select();
+                    document.execCommand('copy');
+                    this.showNotification('📋 Copied to clipboard!', 'success');
+                }
+            }
+
+            downloadAsText() {
+                const blob = new Blob([this.outputTextarea.value], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `base64-${this.currentFile.name.split('.')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.showNotification('💾 File downloaded!', 'success');
+            }
+
+            clearAll() {
+                this.currentFile = null;
+                this.currentBase64 = null;
+                this.fileInput.value = '';
+                this.previewSection.style.display = 'none';
+                this.outputSection.style.display = 'none';
+                this.showNotification('🗑️ Cleared successfully!', 'success');
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            showNotification(message, type = 'success') {
+                this.notification.textContent = message;
+                this.notification.className = `notification show ${type}`;
+                
+                setTimeout(() => {
+                    this.notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Initialize the converter when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageToBase64Converter();
+        });
+    </script>
+</body>
+</html>
